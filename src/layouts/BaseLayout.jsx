@@ -34,7 +34,7 @@ export const Layout = ({ requiredRole }) => {
                         to={`/${requiredRole}`}
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${isActive(`/${requiredRole}`) ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-indigo-100 hover:bg-indigo-800/50 hover:text-white'}`}
                     >
-                        <Home className="w-5 h-5" /> Dashboard
+                        <Home className="w-5 h-5" /> Beranda
                     </Link>
 
                     {requiredRole === 'student' && (
@@ -42,7 +42,7 @@ export const Layout = ({ requiredRole }) => {
                             to="/student/submit"
                             className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${isActive('/student/submit') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-indigo-100 hover:bg-indigo-800/50 hover:text-white'}`}
                         >
-                            <FileText className="w-5 h-5" /> Submit Document
+                            <FileText className="w-5 h-5" /> Unggah Dokumen
                         </Link>
                     )}
 
@@ -51,7 +51,7 @@ export const Layout = ({ requiredRole }) => {
                             to="/verificator/examiners"
                             className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${isActive('/verificator/examiners') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-indigo-100 hover:bg-indigo-800/50 hover:text-white'}`}
                         >
-                            <Users className="w-5 h-5" /> Manage Examiners
+                            <Users className="w-5 h-5" /> Kelola Penguji
                         </Link>
                     )}
 
@@ -60,7 +60,7 @@ export const Layout = ({ requiredRole }) => {
                             to="/supervisor/schedule"
                             className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${isActive('/supervisor/schedule') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-indigo-100 hover:bg-indigo-800/50 hover:text-white'}`}
                         >
-                            <CheckCircle className="w-5 h-5" /> Schedule Defenses
+                            <CheckCircle className="w-5 h-5" /> Jadwal Sidang
                         </Link>
                     )}
                 </nav>
@@ -75,15 +75,15 @@ export const Layout = ({ requiredRole }) => {
                             {currentUser.name.charAt(0)}
                         </div>
                         <div>
-                            <div className="font-semibold text-slate-800">Welcome back, {currentUser.name}</div>
-                            <div className="text-xs text-slate-500 font-medium">Have a great day at work!</div>
+                            <div className="font-semibold text-slate-800">Selamat datang kembali, {currentUser.name}</div>
+                            <div className="text-xs text-slate-500 font-medium">Semoga sukses untuk Proposal dan Skripsi Anda!</div>
                         </div>
                     </div>
                     <button
                         onClick={handleLogout}
                         className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border border-transparent hover:border-red-100"
                     >
-                        <LogOut className="w-4 h-4" /> Sign Out
+                        <LogOut className="w-4 h-4" /> Keluar
                     </button>
                 </header>
 

@@ -46,7 +46,6 @@ sudo chown -R $USER:$USER /var/www/tdms
 # If using Git:
 git clone https://github.com/yourusername/thesis-defense-management-system.git /var/www/tdms
 ```
-*(If you are not using Git, you will need to upload your local files to the `/var/www/tdms` folder using an FTP client or `rsync`.)*
 
 ---
 
@@ -112,7 +111,8 @@ server {
     }
 
     # Proxy API requests to the Node.js Backend
-    location /api/ {
+    # (Node.js runs on localhost:3001 inside the VPS, Nginx forwards external requests to it)
+    location /api {
         proxy_pass http://localhost:3001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
@@ -123,8 +123,8 @@ server {
 
     # Proxy Upload files directly to the Node.js Backend 
     # (Node serves them as express.static)
-    location /uploads/ {
-        proxy_pass http://localhost:3001/uploads/;
+    location /uploads {
+        proxy_pass http://localhost:3001;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
     }
@@ -158,4 +158,53 @@ sudo apt install -y certbot python3-certbot-nginx
 sudo certbot --nginx -d your_domain.com
 ```
 
-Your system is now deployed! 🚀 You can visit `http://your_domain_or_vps_ip` to access the application.
+---
+
+## Step 7: How to Deploy Updates in the Future (Continuous Deployment Workflow)
+
+When you make changes locally on your IDE, you need a workflow to push those changes to the VPS.
+
+The most common and robust way to deploy ongoing changes is using **Git**. 
+
+### 1. Push Changes from your Local IDE to GitHub
+On your laptop (in VSCode or terminal):
+```bash
+git add .
+git commit -m "Your update message"
+git push origin main
+```
+
+### 2. Pull Changes on Content on the VPS
+SSH into your VPS and navigate to the project directory:
+```bash
+cd /var/www/tdms
+
+# Pull the latest changes from GitHub
+git pull origin main
+```
+
+### 3. Apply the Updates
+
+**If you updated Frontend code (React/Vite):**
+```bash
+# Reinstall packages just in case you added new dependencies
+npm install
+
+# Rebuild the production react files
+npm run build
+```
+*Note: Because Nginx serves the static `dist/` folder, Nginx will automatically start serving the new UI immediately. No Nginx restart needed!*
+
+**If you updated Backend code (Node.js/Express):**
+```bash
+# Navigate to the backend folder
+cd server
+
+# Install any new backend dependencies
+npm install
+
+# Restart the PM2 process to apply new backend code
+pm2 restart tdms-backend
+```
+
+That's it! Your online application is now running the latest version of your code.

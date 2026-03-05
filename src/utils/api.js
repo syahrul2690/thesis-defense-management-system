@@ -34,7 +34,21 @@ async function apiFetch(endpoint, options = {}) {
         throw new Error('Unauthorized');
     }
 
-    const data = await res.json();
+    let data;
+    const text = await res.text();
+
+    if (text) {
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            if (!res.ok) {
+                throw new Error('Server returned an invalid response');
+            }
+            data = {};
+        }
+    } else {
+        data = {}; // Handle empty responses (like 204 No Content) gracefully
+    }
 
     if (!res.ok) {
         throw new Error(data.error || 'Request failed');

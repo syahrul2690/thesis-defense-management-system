@@ -27,7 +27,7 @@ const Register = () => {
         setError('');
 
         if (formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
+            setError('Kata sandi tidak cocok');
             return;
         }
 
@@ -41,12 +41,12 @@ const Register = () => {
             );
 
             if (result.success) {
-                navigate('/login', { state: { message: 'Registration successful! Please login.' } });
+                navigate('/login', { state: { message: 'Registrasi berhasil! Silakan masuk.' } });
             } else {
-                setError(result.error || 'Registration failed.');
+                setError(result.error || 'Registrasi gagal.');
             }
         } catch (err) {
-            setError('Registration failed. Please try again.');
+            setError('Registrasi gagal. Silakan coba lagi.');
         } finally {
             setIsLoading(false);
         }
@@ -64,8 +64,8 @@ const Register = () => {
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-white shadow-lg mb-4 transform rotate-3 transition-transform">
                         <span className="text-3xl filter drop-shadow-md">🎓</span>
                     </div>
-                    <h2 className="text-3xl font-extrabold text-white tracking-tight">Create Account</h2>
-                    <p className="text-indigo-200 mt-2 font-medium">Student Registration</p>
+                    <h2 className="text-3xl font-extrabold text-white tracking-tight">Buat Akun</h2>
+                    <p className="text-indigo-200 mt-2 font-medium">Registrasi Mahasiswa</p>
                 </div>
 
                 {error && (
@@ -76,7 +76,7 @@ const Register = () => {
 
                 <form onSubmit={handleRegister} className="space-y-5">
                     <div>
-                        <label className="block text-sm font-semibold text-indigo-100 mb-1">Full Name</label>
+                        <label className="block text-sm font-semibold text-indigo-100 mb-1">Nama Lengkap</label>
                         <input
                             type="text"
                             name="name"
@@ -88,7 +88,7 @@ const Register = () => {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-indigo-100 mb-1">Student ID (NIM)</label>
+                        <label className="block text-sm font-semibold text-indigo-100 mb-1">Nomor Induk Mahasiswa (NIM)</label>
                         <input
                             type="text"
                             name="studentId"
@@ -100,7 +100,7 @@ const Register = () => {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-indigo-100 mb-1">Email Address</label>
+                        <label className="block text-sm font-semibold text-indigo-100 mb-1">Alamat Email</label>
                         <input
                             type="email"
                             name="email"
@@ -112,7 +112,7 @@ const Register = () => {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-indigo-100 mb-1">Password</label>
+                        <label className="block text-sm font-semibold text-indigo-100 mb-1">Kata Sandi</label>
                         <input
                             type="password"
                             name="password"
@@ -124,7 +124,7 @@ const Register = () => {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-indigo-100 mb-1">Confirm Password</label>
+                        <label className="block text-sm font-semibold text-indigo-100 mb-1">Konfirmasi Kata Sandi</label>
                         <input
                             type="password"
                             name="confirmPassword"
@@ -141,14 +141,14 @@ const Register = () => {
                         disabled={isLoading}
                         className="w-full mt-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-fuchsia-500 text-white font-bold py-4 rounded-xl hover:from-indigo-600 hover:via-purple-600 hover:to-fuchsia-600 shadow-lg shadow-indigo-500/25 transform uppercase tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {isLoading ? 'Registering...' : 'Register Account'}
+                        {isLoading ? 'Mendaftar...' : 'Daftar Akun'}
                     </button>
                 </form>
 
                 <div className="mt-6 text-center text-sm text-indigo-200">
-                    Already have an account?{' '}
+                    Sudah punya akun?{' '}
                     <Link to="/login" className="text-white hover:text-indigo-300 font-semibold transition-colors">
-                        Sign In
+                        Masuk
                     </Link>
                 </div>
             </div>

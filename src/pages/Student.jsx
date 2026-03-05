@@ -19,11 +19,18 @@ const StatusBadge = ({ status }) => {
         Missing: Clock,
     }[status] || Clock;
 
+    const statusLabels = {
+        Pending: 'Menunggu',
+        Verified: 'Terverifikasi',
+        Rejected: 'Ditolak',
+        Missing: 'Belum Ada',
+    };
+
     return (
-        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${styles[status]}`}>
+        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${styles[status]}`} >
             <Icon className="w-3.5 h-3.5" />
-            {status}
-        </span>
+            {statusLabels[status] || status}
+        </span >
     );
 };
 
@@ -47,8 +54,8 @@ export const StudentDashboard = () => {
         return (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
                 <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-                    <h3 className="text-lg font-medium text-gray-900">{title} Documents</h3>
-                    <span className="text-sm text-gray-500">{phaseSubmissions.length} of {docs.length} Submitted</span>
+                    <h3 className="text-lg font-medium text-gray-900">Dokumen {title}</h3>
+                    <span className="text-sm text-gray-500">{phaseSubmissions.length} dari {docs.length} Terunggah</span>
                 </div>
 
                 <div className="divide-y divide-gray-200">
@@ -63,7 +70,7 @@ export const StudentDashboard = () => {
                                         {docName}
                                         {submission?.is_reuploaded === 1 && (
                                             <span className="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wide flex items-center gap-1">
-                                                <AlertCircle className="w-3 h-3" /> Re-uploaded
+                                                <AlertCircle className="w-3 h-3" /> Diunggah Ulang
                                             </span>
                                         )}
                                         <StatusBadge status={status} />
@@ -71,14 +78,14 @@ export const StudentDashboard = () => {
                                     {submission ? (
                                         <>
                                             <div className="text-xs text-gray-500 mt-1">
-                                                Submitted on {new Date(submission.created_at).toLocaleDateString()}
+                                                Diunggah pada {new Date(submission.created_at).toLocaleDateString('id-ID')}
                                             </div>
                                             <a href={submission.file_path} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:text-indigo-800 mt-2 inline-block font-medium">
-                                                View Attached File →
+                                                Lihat File Terlampir →
                                             </a>
                                         </>
                                     ) : (
-                                        <div className="text-xs text-red-500 mt-1">Required Document</div>
+                                        <div className="text-xs text-red-500 mt-1">Dokumen Wajib</div>
                                     )}
                                 </div>
                             </div>
@@ -91,11 +98,11 @@ export const StudentDashboard = () => {
 
     return (
         <div className="space-y-8">
-            <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 to-purple-600">My Overview</h2>
+            <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 to-purple-600">Ringkasan Saya</h2>
 
             {mySchedules.length > 0 && (
                 <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-indigo-900 mb-4">Upcoming Defenses</h3>
+                    <h3 className="text-lg font-semibold text-indigo-900 mb-4">Jadwal Sidang Mendatang</h3>
                     <div className="grid gap-4 md:grid-cols-2">
                         {mySchedules.map(sched => {
                             const relatedSub = mySubmissions.find(s => s.id === sched.submission_id);
@@ -103,11 +110,11 @@ export const StudentDashboard = () => {
                                 <div key={sched.id} className="bg-white rounded-lg p-4 shadow-sm border border-indigo-100">
                                     <div className="font-medium text-indigo-900">{relatedSub?.type}</div>
                                     <div className="text-sm text-indigo-700 mt-1">
-                                        Date: {new Date(sched.event_date).toLocaleDateString()}
+                                        Tanggal: {new Date(sched.event_date).toLocaleDateString('id-ID')}
                                     </div>
                                     <div className="text-xs text-indigo-500 mt-2">
-                                        Chief: {sched.chief_examiner}<br />
-                                        Secretary: {sched.secretary}
+                                        Ketua Penguji: {sched.chief_examiner}<br />
+                                        Sekretaris: {sched.secretary}
                                     </div>
                                 </div>
                             );
@@ -116,9 +123,9 @@ export const StudentDashboard = () => {
                 </div>
             )}
 
-            {renderDocumentGroup("Proposal Phase", PROPOSAL_DOCS, "Proposal")}
+            {renderDocumentGroup("Fase Proposal", PROPOSAL_DOCS, "Proposal")}
             {isProposalCleared ? (
-                renderDocumentGroup("Thesis Phase", THESIS_DOCS, "Thesis")
+                renderDocumentGroup("Fase Skripsi", THESIS_DOCS, "Thesis")
             ) : (
                 <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center shadow-sm">
                     <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-200 text-gray-400 mb-4">
@@ -126,9 +133,9 @@ export const StudentDashboard = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-700 mb-2">Thesis Phase Locked</h3>
+                    <h3 className="text-xl font-bold text-gray-700 mb-2">Fase Skripsi Terkunci</h3>
                     <p className="text-sm text-gray-500 max-w-md mx-auto">
-                        All required Proposal documents must be uploaded and <span className="font-semibold text-gray-700">Verified</span> by the faculty before you can proceed to the Thesis phase.
+                        Semua dokumen wajib Proposal harus diunggah dan <span className="font-semibold text-gray-700">Terverifikasi</span> oleh fakultas sebelum Anda dapat melanjutkan ke fase Skripsi.
                     </p>
                 </div>
             )}
@@ -182,7 +189,7 @@ export const SubmitDocument = () => {
 
     return (
         <div className="max-w-2xl mx-auto space-y-8">
-            <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 to-purple-600">Submit Document</h2>
+            <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 to-purple-600">Unggah Dokumen</h2>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -193,14 +200,14 @@ export const SubmitDocument = () => {
                     )}
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Phase</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Fase</label>
                         <div className="grid grid-cols-2 gap-4">
                             {['Proposal', 'Thesis'].map((t) => {
                                 const isLocked = t === 'Thesis' && !isProposalCleared;
                                 return (
                                     <label
                                         key={t}
-                                        title={isLocked ? "Complete Proposal Phase verification first." : ""}
+                                        title={isLocked ? "Selesaikan verifikasi Fase Proposal terlebih dahulu." : ""}
                                         className={`flex items-center justify-center px-4 py-3 border rounded-lg transition-colors ${isLocked ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed' :
                                             phase === t ? 'bg-indigo-50 border-indigo-600 text-indigo-700 cursor-pointer' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer'
                                             }`}
@@ -214,7 +221,7 @@ export const SubmitDocument = () => {
                                             onChange={(e) => setPhase(e.target.value)}
                                             className="sr-only"
                                         />
-                                        <span className="font-medium">{t} {isLocked && ' (Locked)'}</span>
+                                        <span className="font-medium">{t === 'Thesis' ? 'Skripsi' : t} {isLocked && ' (Terkunci)'}</span>
                                     </label>
                                 )
                             })}
@@ -222,7 +229,7 @@ export const SubmitDocument = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Select Document</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Pilih Dokumen</label>
                         <select
                             value={selectedDoc}
                             onChange={(e) => setSelectedDoc(e.target.value)}
@@ -232,7 +239,7 @@ export const SubmitDocument = () => {
                                 const isSubmitted = mySubmissions.some(s => s.type === phase && s.document_name === doc);
                                 return (
                                     <option key={doc} value={doc}>
-                                        {doc} {isSubmitted ? '(Re-upload)' : '*'}
+                                        {doc} {isSubmitted ? '(Unggah Ulang)' : '*'}
                                     </option>
                                 );
                             })}
@@ -240,19 +247,19 @@ export const SubmitDocument = () => {
                         {existingSubmission && (
                             <p className="text-sm text-yellow-600 mt-2 flex items-center gap-1">
                                 <RefreshCw className="w-4 h-4" />
-                                This will overwrite your previously submitted document (Status: {existingSubmission.status}).
+                                Ini akan menimpa dokumen Anda yang telah diunggah sebelumnya.
                             </p>
                         )}
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Upload File (PDF)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Unggah File (PDF)</label>
                         <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-indigo-400 transition-colors bg-gray-50 relative">
                             <div className="space-y-1 text-center">
                                 <FileUp className="mx-auto h-12 w-12 text-gray-400" />
                                 <div className="flex text-sm text-gray-600 justify-center">
                                     <label className="relative cursor-pointer rounded-md bg-transparent font-medium text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:text-indigo-500">
-                                        <span>{file ? file.name : 'Choose a file'}</span>
+                                        <span>{file ? file.name : 'Pilih file'}</span>
                                         <input
                                             type="file"
                                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -261,7 +268,7 @@ export const SubmitDocument = () => {
                                         />
                                     </label>
                                 </div>
-                                <p className="text-xs text-gray-500">PDF up to 10MB</p>
+                                <p className="text-xs text-gray-500">PDF hingga 10MB</p>
                             </div>
                         </div>
                     </div>
@@ -275,7 +282,7 @@ export const SubmitDocument = () => {
                                 : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg'
                                 }`}
                         >
-                            {isUploading ? 'Uploading...' : (existingSubmission ? 'Re-upload Document' : 'Submit Document')}
+                            {isUploading ? 'Sedang mengunggah...' : (existingSubmission ? 'Unggah Ulang Dokumen' : 'Unggah Dokumen')}
                         </button>
                     </div>
                 </form>

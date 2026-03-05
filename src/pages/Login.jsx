@@ -27,10 +27,10 @@ const Login = () => {
             if (result.success) {
                 navigate(`/${result.user.role}`);
             } else {
-                setError(result.error || 'Invalid credentials. Please try again.');
+                setError(result.error || 'Kredensial tidak valid. Silakan coba lagi.');
             }
         } catch (err) {
-            setError('Login failed. Please try again.');
+            setError('Login gagal. Silakan coba lagi.');
         } finally {
             setIsLoading(false);
         }
@@ -48,8 +48,8 @@ const Login = () => {
                     <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-white shadow-lg mb-6 transform rotate-3 hover:rotate-6 transition-transform">
                         <span className="text-4xl filter drop-shadow-md">🎓</span>
                     </div>
-                    <h2 className="text-3xl font-extrabold text-white tracking-tight">Sign in to TDMS</h2>
-                    <p className="text-indigo-200 mt-3 font-medium">Thesis Defense Management System</p>
+                    <h2 className="text-3xl font-extrabold text-white tracking-tight">Masuk ke TDMS</h2>
+                    <p className="text-indigo-200 mt-3 font-medium">Sistem Manajemen Sidang Skripsi</p>
                 </div>
 
                 {message && (
@@ -74,11 +74,11 @@ const Login = () => {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="w-full px-5 py-3 bg-slate-800/50 border border-slate-700/50 text-white rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder-slate-400"
-                                placeholder="Enter your email"
+                                placeholder="Masukkan email Anda"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-indigo-100 mb-1">Password</label>
+                            <label className="block text-sm font-semibold text-indigo-100 mb-1">Kata Sandi</label>
                             <input
                                 type="password"
                                 required
@@ -95,25 +95,25 @@ const Login = () => {
                         disabled={isLoading}
                         className="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-fuchsia-500 text-white font-bold py-4 rounded-xl hover:from-indigo-600 hover:via-purple-600 hover:to-fuchsia-600 shadow-lg shadow-indigo-500/25 transform uppercase tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {isLoading ? 'Signing in...' : 'Sign In'}
+                        {isLoading ? 'Sedang masuk...' : 'Masuk'}
                     </button>
                 </form>
 
                 <div className="mt-6 text-center text-sm text-indigo-200">
-                    Don't have an account?{' '}
+                    Belum punya akun?{' '}
                     <Link to="/register" className="text-white hover:text-indigo-300 font-semibold transition-colors">
-                        Register Here
+                        Daftar di sini
                     </Link>
                 </div>
 
                 <div className="mt-6 p-5 bg-indigo-950/40 border border-indigo-500/30 rounded-xl text-sm text-indigo-200 backdrop-blur-sm">
                     <div className="flex items-center gap-2 font-semibold mb-2 text-indigo-100">
                         <span className="w-2 h-2 rounded-full bg-green-400"></span>
-                        Demo Accounts
+                        Akun Demo
                     </div>
                     <div className="space-y-1 text-xs">
-                        <p>Student: <span className="text-white">john@student.ac.id</span> / password123</p>
-                        <p>Verificator: <span className="text-white">vera@admin.ac.id</span> / Hermawan1234</p>
+                        <p>Mahasiswa: <span className="text-white">john@student.ac.id</span> / password123</p>
+                        <p>Verifikator: <span className="text-white">vera@admin.ac.id</span> / Hermawan1234</p>
                         <p>Supervisor: <span className="text-white">smith@faculty.ac.id</span> / Hermawan1234</p>
                     </div>
                 </div>
