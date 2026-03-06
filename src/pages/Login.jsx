@@ -49,7 +49,7 @@ const Login = () => {
                         <span className="text-4xl filter drop-shadow-md">🎓</span>
                     </div>
                     <h2 className="text-3xl font-extrabold text-white tracking-tight">Masuk ke TDMS</h2>
-                    <p className="text-indigo-200 mt-3 font-medium">Sistem Manajemen Sidang Skripsi</p>
+                    <p className="text-indigo-200 mt-3 font-medium">Sistem Manajemen Sidang Thesis</p>
                 </div>
 
                 {message && (

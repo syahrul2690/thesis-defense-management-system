@@ -76,7 +76,7 @@ export const Layout = ({ requiredRole }) => {
                         </div>
                         <div>
                             <div className="font-semibold text-slate-800">Selamat datang kembali, {currentUser.name}</div>
-                            <div className="text-xs text-slate-500 font-medium">Semoga sukses untuk Proposal dan Skripsi Anda!</div>
+                            <div className="text-xs text-slate-500 font-medium">Semoga sukses untuk Proposal dan Thesis Anda!</div>
                         </div>
                     </div>
                     <button

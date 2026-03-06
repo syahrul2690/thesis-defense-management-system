@@ -125,7 +125,7 @@ export const StudentDashboard = () => {
 
             {renderDocumentGroup("Fase Proposal", PROPOSAL_DOCS, "Proposal")}
             {isProposalCleared ? (
-                renderDocumentGroup("Fase Skripsi", THESIS_DOCS, "Thesis")
+                renderDocumentGroup("Fase Thesis", THESIS_DOCS, "Thesis")
             ) : (
                 <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center shadow-sm">
                     <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-200 text-gray-400 mb-4">
@@ -133,9 +133,9 @@ export const StudentDashboard = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-700 mb-2">Fase Skripsi Terkunci</h3>
+                    <h3 className="text-xl font-bold text-gray-700 mb-2">Fase Thesis Terkunci</h3>
                     <p className="text-sm text-gray-500 max-w-md mx-auto">
-                        Semua dokumen wajib Proposal harus diunggah dan <span className="font-semibold text-gray-700">Terverifikasi</span> oleh fakultas sebelum Anda dapat melanjutkan ke fase Skripsi.
+                        Semua dokumen wajib Proposal harus diunggah dan <span className="font-semibold text-gray-700">Terverifikasi</span> oleh fakultas sebelum Anda dapat melanjutkan ke fase Thesis.
                     </p>
                 </div>
             )}
@@ -221,7 +221,7 @@ export const SubmitDocument = () => {
                                             onChange={(e) => setPhase(e.target.value)}
                                             className="sr-only"
                                         />
-                                        <span className="font-medium">{t === 'Thesis' ? 'Skripsi' : t} {isLocked && ' (Terkunci)'}</span>
+                                        <span className="font-medium">{t === 'Thesis' ? 'Thesis' : t} {isLocked && ' (Terkunci)'}</span>
                                     </label>
                                 )
                             })}
