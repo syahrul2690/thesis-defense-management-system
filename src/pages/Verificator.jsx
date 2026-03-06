@@ -4,7 +4,7 @@ import { CheckCircle, XCircle, Clock, Trash2, AlertCircle, ChevronDown, ChevronU
 import { getDocumentSortIndex } from '../utils/constants.js';
 
 export const VerificatorDashboard = () => {
-    const { submissions, updateSubmissionStatus } = useMockData();
+    const { submissions, updateSubmissionStatus, schedules } = useMockData();
 
     const handleStatusUpdate = (id, newStatus) => {
         updateSubmissionStatus(id, newStatus);
@@ -19,10 +19,18 @@ export const VerificatorDashboard = () => {
                 studentName: sub.student_name || 'Mahasiswa Tidak Dikenal',
                 studentIdentifier: sub.student_identifier || 'Tanpa NIM',
                 studentEmail: sub.student_email || '',
-                documents: []
+                documents: [],
+                schedules: []
             };
         }
         acc[key].documents.push(sub);
+
+        // Map schedules to student so we can show tags
+        const sched = schedules.find(s => s.submission_id === sub.id);
+        if (sched && !acc[key].schedules.some(s => s.id === sched.id)) {
+            acc[key].schedules.push({ ...sched, type: sub.type });
+        }
+
         return acc;
     }, {}));
 
@@ -49,11 +57,25 @@ export const VerificatorDashboard = () => {
                 <div className="space-y-6">
                     {groupedSubmissions.map(studentGroup => (
                         <div key={studentGroup.studentId} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                                <h3 className="text-xl font-bold text-gray-900">{studentGroup.studentName}</h3>
-                                <div className="text-sm text-gray-600 mt-1 flex items-center gap-4">
-                                    <span>NIM: <span className="font-medium text-gray-800">{studentGroup.studentIdentifier}</span></span>
-                                    <span>Email: <span className="font-medium text-gray-800">{studentGroup.studentEmail}</span></span>
+                            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center flex-wrap gap-4">
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-900">{studentGroup.studentName}</h3>
+                                    <div className="text-sm text-gray-600 mt-1 flex items-center gap-4">
+                                        <span>NIM: <span className="font-medium text-gray-800">{studentGroup.studentIdentifier}</span></span>
+                                        <span>Email: <span className="font-medium text-gray-800">{studentGroup.studentEmail}</span></span>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    {studentGroup.schedules.some(s => s.type === 'Proposal') && (
+                                        <span className="text-xs bg-indigo-100 text-indigo-700 font-bold px-2 py-1 rounded-full border border-indigo-200">
+                                            Proposal Dijadwalkan
+                                        </span>
+                                    )}
+                                    {studentGroup.schedules.some(s => s.type === 'Thesis') && (
+                                        <span className="text-xs bg-purple-100 text-purple-700 font-bold px-2 py-1 rounded-full border border-purple-200">
+                                            Thesis Dijadwalkan
+                                        </span>
+                                    )}
                                 </div>
                             </div>
 
@@ -75,7 +97,7 @@ export const VerificatorDashboard = () => {
                                                 className="w-full px-6 py-3 bg-gray-50/50 hover:bg-gray-100/80 border-b border-gray-100 flex items-center justify-between transition-colors outline-none focus:bg-gray-100"
                                                 title={isOpen ? "Minimalkan fase" : "Maksimalkan fase"}
                                             >
-                                                <h4 className="text-sm font-bold text-indigo-900 uppercase tracking-widest">{phase === 'Thesis' ? 'Skripsi' : phase} Fase</h4>
+                                                <h4 className="text-sm font-bold text-indigo-900 uppercase tracking-widest">{phase} Fase</h4>
                                                 {isOpen ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
                                             </button>
 
@@ -145,11 +167,12 @@ export const VerificatorDashboard = () => {
 export const ManageExaminers = () => {
     const { examiners, addExaminer, removeExaminer } = useMockData();
     const [newName, setNewName] = useState('');
+    const [role, setRole] = useState('Penguji');
 
     const handleAdd = (e) => {
         e.preventDefault();
         if (newName.trim()) {
-            addExaminer(newName.trim());
+            addExaminer(`${newName.trim()} (${role})`);
             setNewName('');
         }
     };
@@ -168,6 +191,14 @@ export const ManageExaminers = () => {
                             value={newName}
                             onChange={(e) => setNewName(e.target.value)}
                         />
+                        <select
+                            value={role}
+                            onChange={(e) => setRole(e.target.value)}
+                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                        >
+                            <option value="Ketua Penguji">Ketua Penguji</option>
+                            <option value="Penguji">Penguji</option>
+                        </select>
                         <button
                             type="submit"
                             disabled={!newName.trim()}

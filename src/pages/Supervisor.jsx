@@ -73,7 +73,7 @@ export const SupervisorDashboard = () => {
                     </div>
                     <div>
                         <div className="text-3xl font-extrabold text-slate-800">{studentsWithVerifiedDefenses}</div>
-                        <div className="text-sm text-slate-500 font-semibold uppercase tracking-wider mt-1">Siap Sidang Skripsi</div>
+                        <div className="text-sm text-slate-500 font-semibold uppercase tracking-wider mt-1">Siap Sidang Thesis</div>
                     </div>
                 </div>
             </div>
@@ -102,7 +102,19 @@ export const SupervisorDashboard = () => {
                                         <span>Email: <span className="font-medium text-gray-800">{student.studentEmail}</span></span>
                                     </div>
                                 </div>
-                                <div className="text-gray-400">
+                                <div className="text-gray-400 flex items-center gap-4">
+                                    <div className="flex gap-2">
+                                        {student.schedules.some(s => s.type === 'Proposal') && (
+                                            <span className="text-xs bg-indigo-100 text-indigo-700 font-bold px-2 py-1 rounded-full border border-indigo-200">
+                                                Proposal Dijadwalkan
+                                            </span>
+                                        )}
+                                        {student.schedules.some(s => s.type === 'Thesis') && (
+                                            <span className="text-xs bg-purple-100 text-purple-700 font-bold px-2 py-1 rounded-full border border-purple-200">
+                                                Thesis Dijadwalkan
+                                            </span>
+                                        )}
+                                    </div>
                                     {expandedStudents[student.studentId] ? (
                                         <ChevronUp className="w-6 h-6" />
                                     ) : (
@@ -129,7 +141,7 @@ export const SupervisorDashboard = () => {
 
                                                 return (
                                                     <div key={phase}>
-                                                        <h6 className="text-xs font-bold text-indigo-900 uppercase tracking-widest mb-3 border-b border-gray-100 pb-1">Fase {phase === 'Thesis' ? 'Skripsi' : phase}</h6>
+                                                        <h6 className="text-xs font-bold text-indigo-900 uppercase tracking-widest mb-3 border-b border-gray-100 pb-1">Fase {phase}</h6>
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                             {phaseDocs.map(doc => (
                                                                 <div key={doc.id} className="bg-gray-50 rounded-lg p-4 border border-gray-100 flex justify-between items-center hover:shadow-md transition-shadow">
@@ -170,7 +182,7 @@ export const SupervisorDashboard = () => {
                                                 {student.schedules.map(sched => (
                                                     <div key={sched.id} className="bg-indigo-50 border border-indigo-100 rounded-lg p-5">
                                                         <div className="flex justify-between items-start mb-3">
-                                                            <h6 className="font-bold text-indigo-900 text-lg">Sidang {sched.type === 'Thesis' ? 'Skripsi' : sched.type}</h6>
+                                                            <h6 className="font-bold text-indigo-900 text-lg">Sidang {sched.type === 'Thesis' ? 'Thesis' : sched.type}</h6>
                                                             <div className="bg-white text-indigo-700 font-semibold px-3 py-1 rounded-md text-sm shadow-sm border border-indigo-100">
                                                                 {new Date(sched.event_date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                                                             </div>
@@ -273,7 +285,7 @@ export const ScheduleDefense = () => {
         }
 
         addSchedule(scheduleData);
-        setSuccessMsg(`Sidang ${formType === 'Thesis' ? 'Skripsi' : formType} berhasil dijadwalkan!`);
+        setSuccessMsg(`Sidang ${formType} berhasil dijadwalkan!`);
         setTimeout(() => setSuccessMsg(''), 3000);
 
         if (formType === 'Proposal') {
@@ -299,7 +311,7 @@ export const ScheduleDefense = () => {
             return (
                 <div className="text-center text-gray-500 py-8 bg-gray-50 rounded-xl border border-gray-100">
                     <CheckCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p>Semua sidang {formType === 'Thesis' ? 'skripsi' : 'proposal'} yang terverifikasi telah dijadwalkan.</p>
+                    <p>Semua sidang {formType.toLowerCase()} yang terverifikasi telah dijadwalkan.</p>
                 </div>
             );
         }
@@ -307,10 +319,10 @@ export const ScheduleDefense = () => {
         return (
             <form onSubmit={(e) => handleSubmit(e, formType)} className="space-y-6 bg-white p-6 rounded-xl border border-gray-200 shadow-sm relative">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-t-xl" />
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Fase {formType === 'Thesis' ? 'Skripsi' : formType}</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-6">Fase {formType}</h3>
                 <div className="grid grid-cols-2 gap-6">
                     <div className="col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Pilih Mahasiswa ({formType === 'Thesis' ? 'Skripsi' : formType})</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Pilih Mahasiswa ({formType})</label>
                         <select
                             name="submission_id"
                             value={formState.submission_id}
@@ -399,7 +411,7 @@ export const ScheduleDefense = () => {
                         type="submit"
                         className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold tracking-wide uppercase py-4 rounded-xl shadow-lg hover:from-indigo-700 hover:to-purple-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
                     >
-                        Jadwalkan Sidang {formType === 'Thesis' ? 'Skripsi' : formType}
+                        Jadwalkan Sidang {formType}
                     </button>
                 </div>
             </form>
