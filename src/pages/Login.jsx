@@ -106,17 +106,6 @@ const Login = () => {
                     </Link>
                 </div>
 
-                <div className="mt-6 p-5 bg-indigo-950/40 border border-indigo-500/30 rounded-xl text-sm text-indigo-200 backdrop-blur-sm">
-                    <div className="flex items-center gap-2 font-semibold mb-2 text-indigo-100">
-                        <span className="w-2 h-2 rounded-full bg-green-400"></span>
-                        Akun Demo
-                    </div>
-                    <div className="space-y-1 text-xs">
-                        <p>Mahasiswa: <span className="text-white">john@student.ac.id</span> / password123</p>
-                        <p>Verifikator: <span className="text-white">vera@admin.ac.id</span> / Hermawan1234</p>
-                        <p>Supervisor: <span className="text-white">smith@faculty.ac.id</span> / Hermawan1234</p>
-                    </div>
-                </div>
             </div>
         </div>
     );
