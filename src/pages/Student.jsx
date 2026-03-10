@@ -113,8 +113,13 @@ export const StudentDashboard = () => {
                                         Tanggal: {new Date(sched.event_date).toLocaleDateString('id-ID')}
                                     </div>
                                     <div className="text-xs text-indigo-500 mt-2">
-                                        Ketua Penguji: {sched.chief_examiner}<br />
-                                        Sekretaris: {sched.secretary}
+                                        Ketua Penguji: {sched.chief_examiner}
+                                        {sched.type === 'Thesis' && (
+                                            <>
+                                                <br />
+                                                Sekretaris: {sched.secretary}
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             );

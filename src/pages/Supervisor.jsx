@@ -189,7 +189,9 @@ export const SupervisorDashboard = () => {
                                                         </div>
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 mt-2 text-sm">
                                                             <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Ketua Penguji:</span> <span className="text-indigo-900 font-medium">{sched.chief_examiner}</span></div>
-                                                            <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Sekretaris:</span> <span className="text-indigo-900 font-medium">{sched.secretary}</span></div>
+                                                            {sched.type === 'Thesis' && (
+                                                                <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Sekretaris:</span> <span className="text-indigo-900 font-medium">{sched.secretary}</span></div>
+                                                            )}
                                                             <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Penguji 1:</span> <span className="text-indigo-900 font-medium">{sched.examiner_1}</span></div>
                                                             <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Penguji 2:</span> <span className="text-indigo-900 font-medium">{sched.examiner_2}</span></div>
                                                             <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Penguji 3:</span> <span className="text-indigo-900 font-medium">{sched.examiner_3}</span></div>
@@ -282,6 +284,7 @@ export const ScheduleDefense = () => {
         let scheduleData = { ...formState, submission_id: parseInt(formState.submission_id) };
         if (formType === 'Proposal') {
             scheduleData.examiner_4 = null; // proposals don't need 4th examiner
+            scheduleData.secretary = null; // proposals don't need secretary
         }
 
         addSchedule(scheduleData);
@@ -363,13 +366,15 @@ export const ScheduleDefense = () => {
                         </select>
                     </div>
 
-                    <div className="col-span-2 md:col-span-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Sekretaris</label>
-                        <select name="secretary" required value={formState.secretary} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                            <option value="">Pilih...</option>
-                            {getAvailableExaminers(formState, 'secretary').map(ex => <option key={ex.id} value={ex.name}>{ex.name}</option>)}
-                        </select>
-                    </div>
+                    {formType === 'Thesis' && (
+                        <div className="col-span-2 md:col-span-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Sekretaris</label>
+                            <select name="secretary" required value={formState.secretary} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                <option value="">Pilih...</option>
+                                {getAvailableExaminers(formState, 'secretary').map(ex => <option key={ex.id} value={ex.name}>{ex.name}</option>)}
+                            </select>
+                        </div>
+                    )}
 
                     <div className="col-span-2 md:col-span-1">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Penguji 1</label>
