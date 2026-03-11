@@ -31,10 +31,17 @@ const Register = () => {
             return;
         }
 
+        // Format name to Title Case (e.g., "JOHN DOE" or "john doe" -> "John Doe")
+        const formattedName = formData.name
+            .toLowerCase()
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+
         setIsLoading(true);
         try {
             const result = await register(
-                formData.name,
+                formattedName,
                 formData.studentId,
                 formData.email,
                 formData.password
