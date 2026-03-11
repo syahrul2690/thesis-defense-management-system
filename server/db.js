@@ -66,6 +66,7 @@ export async function initDatabase() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       submission_id INTEGER NOT NULL,
       event_date TEXT NOT NULL,
+      clocktime TIME,
       chief_examiner TEXT,
       secretary TEXT,
       examiner_1 TEXT,
@@ -74,6 +75,12 @@ export async function initDatabase() {
       examiner_4 TEXT
     );
   `);
+
+  try {
+    db.run("ALTER TABLE schedules ADD COLUMN clocktime TIME");
+  } catch (err) {
+    // Column probably already exists
+  }
 
   // Seed data (only if tables are empty)
   const userCount = db.exec('SELECT COUNT(*) as count FROM users')[0]?.values[0][0] || 0;

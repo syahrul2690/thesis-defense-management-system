@@ -41,7 +41,7 @@ export const VerificatorDashboard = () => {
         const key = `${studentId}-${phase}`;
         setOpenPhases(prev => ({
             ...prev,
-            [key]: prev[key] === undefined ? false : !prev[key] // Default is true, so toggle from undef to false
+            [key]: !prev[key]
         }));
     };
 
@@ -65,17 +65,23 @@ export const VerificatorDashboard = () => {
                                         <span>Email: <span className="font-medium text-gray-800">{studentGroup.studentEmail}</span></span>
                                     </div>
                                 </div>
-                                <div className="flex gap-2">
-                                    {studentGroup.schedules.some(s => s.type === 'Proposal') && (
-                                        <span className="text-xs bg-indigo-100 text-indigo-700 font-bold px-2 py-1 rounded-full border border-indigo-200">
-                                            Proposal Dijadwalkan
-                                        </span>
-                                    )}
-                                    {studentGroup.schedules.some(s => s.type === 'Thesis') && (
-                                        <span className="text-xs bg-purple-100 text-purple-700 font-bold px-2 py-1 rounded-full border border-purple-200">
-                                            Thesis Dijadwalkan
-                                        </span>
-                                    )}
+                                <div className="flex flex-col items-end gap-1.5">
+                                    {studentGroup.schedules.some(s => s.type === 'Proposal') && (() => {
+                                        const sched = studentGroup.schedules.find(s => s.type === 'Proposal');
+                                        return (
+                                            <span className="text-xs bg-indigo-100 text-indigo-700 font-bold px-2 py-1 rounded-full border border-indigo-200 flex items-center gap-1">
+                                                <Clock className="w-3 h-3" /> Proposal: {new Date(sched.event_date).toLocaleDateString('id-ID')} {sched.clocktime ? `| ${sched.clocktime} WIB` : ''}
+                                            </span>
+                                        );
+                                    })()}
+                                    {studentGroup.schedules.some(s => s.type === 'Thesis') && (() => {
+                                        const sched = studentGroup.schedules.find(s => s.type === 'Thesis');
+                                        return (
+                                            <span className="text-xs bg-purple-100 text-purple-700 font-bold px-2 py-1 rounded-full border border-purple-200 flex items-center gap-1">
+                                                <Clock className="w-3 h-3" /> Thesis: {new Date(sched.event_date).toLocaleDateString('id-ID')} {sched.clocktime ? `| ${sched.clocktime} WIB` : ''}
+                                            </span>
+                                        );
+                                    })()}
                                 </div>
                             </div>
 
@@ -88,7 +94,7 @@ export const VerificatorDashboard = () => {
                                     if (phaseDocs.length === 0) return null;
 
                                     const phaseKey = `${studentGroup.studentId}-${phase}`;
-                                    const isOpen = openPhases[phaseKey] !== false; // Default to open
+                                    const isOpen = !!openPhases[phaseKey]; // Default to closed
 
                                     return (
                                         <div key={phase} className="p-0">

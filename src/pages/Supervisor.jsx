@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useMockData } from '../context/MockDataContext.jsx';
-import { Calendar, Users, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, Users, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Download } from 'lucide-react';
 import { getDocumentSortIndex, PROPOSAL_DOCS, THESIS_DOCS } from '../utils/constants.js';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export const SupervisorDashboard = () => {
     const { submissions, schedules } = useMockData();
@@ -42,6 +44,51 @@ export const SupervisorDashboard = () => {
         return acc;
     }, {}));
 
+    const handleDownloadPhasePDF = (phase) => {
+        const doc = new jsPDF({ orientation: 'landscape' });
+
+        doc.setFontSize(18);
+        doc.text(`Jadwal Sidang ${phase}`, 14, 22);
+
+        doc.setFontSize(11);
+        doc.text(`Dicetak pada: ${new Date().toLocaleDateString('id-ID')}`, 14, 30);
+
+        const tableColumn = ["Nama Mahasiswa", "NIM", "Hari/Tanggal", "Waktu", "Ketua Penguji", "Sekretaris", "Penguji"];
+
+        // Find all students with a schedule for this phase
+        const phaseStudents = groupedStudents.filter(student => student.schedules.some(s => s.type === phase));
+
+        const tableRows = phaseStudents.map(student => {
+            const sched = student.schedules.find(s => s.type === phase);
+            const examiners = [sched.examiner_1, sched.examiner_2, sched.examiner_3, sched.examiner_4].filter(Boolean).join(', ');
+
+            return [
+                student.studentName,
+                student.studentIdentifier,
+                new Date(sched.event_date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+                sched.clocktime ? `${sched.clocktime} WIB` : '-',
+                sched.chief_examiner || '-',
+                sched.secretary || '-',
+                examiners || '-'
+            ];
+        });
+
+        if (tableRows.length === 0) {
+            tableRows.push(['-', '-', 'Belum ada jadwal', '-', '-', '-', '-']);
+        }
+
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 40,
+            theme: 'grid',
+            styles: { fontSize: 10, cellPadding: 5 },
+            headStyles: { fillColor: [79, 70, 229] }
+        });
+
+        doc.save(`Jadwal_Sidang_${phase}_Summary.pdf`);
+    };
+
     return (
         <div className="space-y-8">
             <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 to-purple-600">Ringkasan Supervisor</h2>
@@ -79,9 +126,25 @@ export const SupervisorDashboard = () => {
             </div>
 
             <div className="mt-8 space-y-6">
-                <div className="flex items-center gap-2 mb-4">
-                    <Users className="w-6 h-6 text-indigo-600" />
-                    <h3 className="text-2xl font-bold text-gray-900">Ringkasan Mahasiswa</h3>
+                <div className="flex items-center gap-2 mb-4 justify-between">
+                    <div className="flex items-center gap-2">
+                        <Users className="w-6 h-6 text-indigo-600" />
+                        <h3 className="text-2xl font-bold text-gray-900">Ringkasan Mahasiswa</h3>
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => handleDownloadPhasePDF('Proposal')}
+                            className="flex items-center gap-1.5 text-xs font-semibold bg-white border border-indigo-200 text-indigo-600 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors shadow-sm"
+                        >
+                            <Download className="w-3.5 h-3.5" /> Cetak Jadwal Proposal
+                        </button>
+                        <button
+                            onClick={() => handleDownloadPhasePDF('Thesis')}
+                            className="flex items-center gap-1.5 text-xs font-semibold bg-white border border-purple-200 text-purple-600 px-3 py-1.5 rounded-lg hover:bg-purple-50 transition-colors shadow-sm"
+                        >
+                            <Download className="w-3.5 h-3.5" /> Cetak Jadwal Thesis
+                        </button>
+                    </div>
                 </div>
 
                 {groupedStudents.length === 0 ? (
@@ -182,9 +245,13 @@ export const SupervisorDashboard = () => {
                                                 {student.schedules.map(sched => (
                                                     <div key={sched.id} className="bg-indigo-50 border border-indigo-100 rounded-lg p-5">
                                                         <div className="flex justify-between items-start mb-3">
-                                                            <h6 className="font-bold text-indigo-900 text-lg">Sidang {sched.type === 'Thesis' ? 'Thesis' : sched.type}</h6>
-                                                            <div className="bg-white text-indigo-700 font-semibold px-3 py-1 rounded-md text-sm shadow-sm border border-indigo-100">
-                                                                {new Date(sched.event_date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                                            <div className="flex flex-col gap-1">
+                                                                <h6 className="font-bold text-indigo-900 text-lg">Sidang {sched.type === 'Thesis' ? 'Thesis' : sched.type}</h6>
+                                                            </div>
+                                                            <div className="bg-white text-indigo-700 font-semibold px-3 py-1.5 rounded-md text-sm shadow-sm border border-indigo-100 flex items-center gap-2">
+                                                                <span>{new Date(sched.event_date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                                                {sched.clocktime && <span className="text-gray-300">|</span>}
+                                                                {sched.clocktime && <span>{sched.clocktime} WIB</span>}
                                                             </div>
                                                         </div>
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 mt-2 text-sm">
@@ -256,6 +323,7 @@ export const ScheduleDefense = () => {
     const defaultFormState = {
         submission_id: '',
         event_date: '',
+        clocktime: '',
         chief_examiner: '',
         secretary: '',
         examiner_1: '',
@@ -279,7 +347,11 @@ export const ScheduleDefense = () => {
         e.preventDefault();
 
         const formState = formType === 'Proposal' ? proposalForm : thesisForm;
-        if (!formState.submission_id || !formState.event_date) return;
+        if (!formState.submission_id || !formState.event_date || !formState.clocktime) {
+            setSuccessMsg('Mohon lengkapi semua data jadwal.');
+            setTimeout(() => setSuccessMsg(''), 3000);
+            return;
+        }
 
         let scheduleData = { ...formState, submission_id: parseInt(formState.submission_id) };
         if (formType === 'Proposal') {
@@ -348,6 +420,18 @@ export const ScheduleDefense = () => {
                             type="date"
                             name="event_date"
                             value={formState.event_date}
+                            onChange={handleChange}
+                            required
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+                        />
+                    </div>
+
+                    <div className="col-span-2 md:col-span-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Waktu Sidang</label>
+                        <input
+                            type="time"
+                            name="clocktime"
+                            value={formState.clocktime}
                             onChange={handleChange}
                             required
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"

@@ -19,13 +19,13 @@ router.get('/', authMiddleware, (req, res) => {
 router.post('/', authMiddleware, requireRole('supervisor'), (req, res) => {
     try {
         const {
-            submission_id, event_date,
+            submission_id, event_date, clocktime,
             chief_examiner, secretary,
             examiner_1, examiner_2, examiner_3, examiner_4
         } = req.body;
 
-        if (!submission_id || !event_date) {
-            return res.status(400).json({ error: 'submission_id and event_date are required' });
+        if (!submission_id || !event_date || !clocktime) {
+            return res.status(400).json({ error: 'submission_id, event_date, and clocktime are required' });
         }
 
         const submission = queryOne('SELECT * FROM submissions WHERE id = ?', [submission_id]);
@@ -37,9 +37,9 @@ router.post('/', authMiddleware, requireRole('supervisor'), (req, res) => {
         }
 
         const lastId = runSql(
-            `INSERT INTO schedules (submission_id, event_date, chief_examiner, secretary, examiner_1, examiner_2, examiner_3, examiner_4)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [submission_id, event_date, chief_examiner, secretary, examiner_1, examiner_2, examiner_3, examiner_4 || null]
+            `INSERT INTO schedules (submission_id, event_date, clocktime, chief_examiner, secretary, examiner_1, examiner_2, examiner_3, examiner_4)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [submission_id, event_date, clocktime, chief_examiner, secretary, examiner_1, examiner_2, examiner_3, examiner_4 || null]
         );
 
         const schedule = queryOne('SELECT * FROM schedules WHERE id = ?', [lastId]);
