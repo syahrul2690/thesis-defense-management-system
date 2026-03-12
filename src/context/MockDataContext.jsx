@@ -144,6 +144,18 @@ export const MockDataProvider = ({ children }) => {
         }
     };
 
+    const updateSchedule = async (id, scheduleData) => {
+        try {
+            const updatedSched = await schedulesApi.update(id, scheduleData);
+            setSchedules(prev => prev.map(s => s.id === id ? updatedSched : s));
+            refreshData(); // Refresh to ensure we get clean lists and inactive ones are removed if needed
+            return updatedSched;
+        } catch (err) {
+            console.error('Failed to update schedule:', err);
+            throw err;
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-900">
@@ -170,6 +182,7 @@ export const MockDataProvider = ({ children }) => {
 
             schedules,
             addSchedule,
+            updateSchedule,
 
             refreshData,
         }}>

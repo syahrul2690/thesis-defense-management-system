@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import { useMockData } from '../context/MockDataContext.jsx';
-import { Calendar, Users, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Download } from 'lucide-react';
+import { Calendar, Users, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Download, Edit2, X, Save } from 'lucide-react';
 import { getDocumentSortIndex, PROPOSAL_DOCS, THESIS_DOCS } from '../utils/constants.js';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 export const SupervisorDashboard = () => {
-    const { submissions, schedules } = useMockData();
+    const { submissions, schedules, updateSchedule, examiners } = useMockData();
     const [expandedStudents, setExpandedStudents] = useState({});
+    
+    // Edit state
+    const [editingScheduleId, setEditingScheduleId] = useState(null);
+    const [editForm, setEditForm] = useState({});
+    const [editError, setEditError] = useState('');
 
     const toggleStudent = (studentId) => {
         setExpandedStudents(prev => ({
@@ -87,6 +92,60 @@ export const SupervisorDashboard = () => {
         });
 
         doc.save(`Jadwal_Sidang_${phase}_Summary.pdf`);
+    };
+
+    const handleEditClick = (sched) => {
+        setEditingScheduleId(sched.id);
+        setEditForm({
+            event_date: sched.event_date || '',
+            clocktime: sched.clocktime || '',
+            chief_examiner: sched.chief_examiner || '',
+            secretary: sched.secretary || '',
+            examiner_1: sched.examiner_1 || '',
+            examiner_2: sched.examiner_2 || '',
+            examiner_3: sched.examiner_3 || '',
+            examiner_4: sched.examiner_4 || '',
+        });
+        setEditError('');
+    };
+
+    const handleCancelEdit = () => {
+        setEditingScheduleId(null);
+        setEditForm({});
+        setEditError('');
+    };
+
+    const handleEditChange = (e) => {
+        setEditForm({
+            ...editForm,
+            [e.target.name]: e.target.value
+        });
+    };
+
+    const getAvailableExaminersForEdit = (currentField) => {
+        const selectedIds = Object.entries(editForm)
+            .filter(([key, value]) => key.startsWith('chief') || key.startsWith('sec') || key.startsWith('exam'))
+            .filter(([key, value]) => key !== currentField && value !== '')
+            .map(([key, value]) => value);
+
+        return examiners.filter(ex => !selectedIds.includes(ex.name));
+    };
+
+    const submitEdit = async (sched) => {
+        if (!editForm.event_date || !editForm.clocktime || !editForm.chief_examiner || !editForm.examiner_1 || !editForm.examiner_2 || !editForm.examiner_3) {
+            setEditError('Lengkapi data wajib (Tanggal, Waktu, Ketua, Penguji 1-3).');
+            return;
+        }
+
+        try {
+            await updateSchedule(sched.id, {
+                ...editForm,
+                submission_id: sched.submission_id
+            });
+            setEditingScheduleId(null);
+        } catch (err) {
+            setEditError('Gagal menyimpan perubahan jadwal.');
+        }
     };
 
     return (
@@ -244,26 +303,106 @@ export const SupervisorDashboard = () => {
                                             <div className="space-y-4">
                                                 {student.schedules.map(sched => (
                                                     <div key={sched.id} className="bg-indigo-50 border border-indigo-100 rounded-lg p-5">
-                                                        <div className="flex justify-between items-start mb-3">
-                                                            <div className="flex flex-col gap-1">
-                                                                <h6 className="font-bold text-indigo-900 text-lg">Sidang {sched.type === 'Thesis' ? 'Thesis' : sched.type}</h6>
+                                                        {editingScheduleId === sched.id ? (
+                                                            <div className="space-y-4">
+                                                                <div className="flex justify-between items-center mb-2">
+                                                                    <h6 className="font-bold text-indigo-900 text-lg">Edit Sidang {sched.type === 'Thesis' ? 'Thesis' : sched.type}</h6>
+                                                                    <div className="flex gap-2">
+                                                                        <button onClick={handleCancelEdit} className="text-gray-500 hover:text-red-600 p-1 bg-white rounded shadow-sm">
+                                                                            <X className="w-5 h-5" />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                                {editError && <div className="text-red-600 text-sm bg-red-50 p-2 rounded">{editError}</div>}
+                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                                    <div>
+                                                                        <label className="block text-xs font-semibold text-indigo-900 mb-1">Tanggal Sidang</label>
+                                                                        <input type="date" name="event_date" value={editForm.event_date} onChange={handleEditChange} className="w-full text-sm px-3 py-1.5 border border-indigo-200 rounded focus:ring-1 focus:ring-indigo-500" />
+                                                                    </div>
+                                                                    <div>
+                                                                        <label className="block text-xs font-semibold text-indigo-900 mb-1">Waktu</label>
+                                                                        <input type="time" name="clocktime" value={editForm.clocktime} onChange={handleEditChange} className="w-full text-sm px-3 py-1.5 border border-indigo-200 rounded focus:ring-1 focus:ring-indigo-500" />
+                                                                    </div>
+                                                                    <div>
+                                                                        <label className="block text-xs font-semibold text-indigo-900 mb-1">Ketua Penguji</label>
+                                                                        <select name="chief_examiner" value={editForm.chief_examiner} onChange={handleEditChange} className="w-full text-sm px-3 py-1.5 border border-indigo-200 rounded focus:ring-1 focus:ring-indigo-500">
+                                                                            <option value="">Pilih...</option>
+                                                                            {getAvailableExaminersForEdit('chief_examiner').map(ex => <option key={ex.id} value={ex.name}>{ex.name}</option>)}
+                                                                        </select>
+                                                                    </div>
+                                                                    {sched.type === 'Thesis' && (
+                                                                        <div>
+                                                                            <label className="block text-xs font-semibold text-indigo-900 mb-1">Sekretaris</label>
+                                                                            <select name="secretary" value={editForm.secretary} onChange={handleEditChange} className="w-full text-sm px-3 py-1.5 border border-indigo-200 rounded focus:ring-1 focus:ring-indigo-500">
+                                                                                <option value="">Pilih...</option>
+                                                                                {getAvailableExaminersForEdit('secretary').map(ex => <option key={ex.id} value={ex.name}>{ex.name}</option>)}
+                                                                            </select>
+                                                                        </div>
+                                                                    )}
+                                                                    <div>
+                                                                        <label className="block text-xs font-semibold text-indigo-900 mb-1">Penguji 1</label>
+                                                                        <select name="examiner_1" value={editForm.examiner_1} onChange={handleEditChange} className="w-full text-sm px-3 py-1.5 border border-indigo-200 rounded focus:ring-1 focus:ring-indigo-500">
+                                                                            <option value="">Pilih...</option>
+                                                                            {getAvailableExaminersForEdit('examiner_1').map(ex => <option key={ex.id} value={ex.name}>{ex.name}</option>)}
+                                                                        </select>
+                                                                    </div>
+                                                                    <div>
+                                                                        <label className="block text-xs font-semibold text-indigo-900 mb-1">Penguji 2</label>
+                                                                        <select name="examiner_2" value={editForm.examiner_2} onChange={handleEditChange} className="w-full text-sm px-3 py-1.5 border border-indigo-200 rounded focus:ring-1 focus:ring-indigo-500">
+                                                                            <option value="">Pilih...</option>
+                                                                            {getAvailableExaminersForEdit('examiner_2').map(ex => <option key={ex.id} value={ex.name}>{ex.name}</option>)}
+                                                                        </select>
+                                                                    </div>
+                                                                    <div>
+                                                                        <label className="block text-xs font-semibold text-indigo-900 mb-1">Penguji 3</label>
+                                                                        <select name="examiner_3" value={editForm.examiner_3} onChange={handleEditChange} className="w-full text-sm px-3 py-1.5 border border-indigo-200 rounded focus:ring-1 focus:ring-indigo-500">
+                                                                            <option value="">Pilih...</option>
+                                                                            {getAvailableExaminersForEdit('examiner_3').map(ex => <option key={ex.id} value={ex.name}>{ex.name}</option>)}
+                                                                        </select>
+                                                                    </div>
+                                                                    {sched.type === 'Thesis' && (
+                                                                        <div>
+                                                                            <label className="block text-xs font-semibold text-indigo-900 mb-1">Penguji 4</label>
+                                                                            <select name="examiner_4" value={editForm.examiner_4} onChange={handleEditChange} className="w-full text-sm px-3 py-1.5 border border-indigo-200 rounded focus:ring-1 focus:ring-indigo-500">
+                                                                                <option value="">Pilih...</option>
+                                                                                {getAvailableExaminersForEdit('examiner_4').map(ex => <option key={ex.id} value={ex.name}>{ex.name}</option>)}
+                                                                            </select>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                <button onClick={() => submitEdit(sched)} className="mt-4 w-full flex justify-center items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition">
+                                                                    <Save className="w-4 h-4" /> Simpan Perubahan
+                                                                </button>
                                                             </div>
-                                                            <div className="bg-white text-indigo-700 font-semibold px-3 py-1.5 rounded-md text-sm shadow-sm border border-indigo-100 flex items-center gap-2">
-                                                                <span>{new Date(sched.event_date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                                                                {sched.clocktime && <span className="text-gray-300">|</span>}
-                                                                {sched.clocktime && <span>{sched.clocktime} WIB</span>}
-                                                            </div>
-                                                        </div>
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 mt-2 text-sm">
-                                                            <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Ketua Penguji:</span> <span className="text-indigo-900 font-medium">{sched.chief_examiner}</span></div>
-                                                            {sched.type === 'Thesis' && (
-                                                                <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Sekretaris:</span> <span className="text-indigo-900 font-medium">{sched.secretary}</span></div>
-                                                            )}
-                                                            <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Penguji 1:</span> <span className="text-indigo-900 font-medium">{sched.examiner_1}</span></div>
-                                                            <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Penguji 2:</span> <span className="text-indigo-900 font-medium">{sched.examiner_2}</span></div>
-                                                            <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Penguji 3:</span> <span className="text-indigo-900 font-medium">{sched.examiner_3}</span></div>
-                                                            {sched.examiner_4 && <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Penguji 4:</span> <span className="text-indigo-900 font-medium">{sched.examiner_4}</span></div>}
-                                                        </div>
+                                                        ) : (
+                                                            <>
+                                                                <div className="flex justify-between items-start mb-3">
+                                                                    <div className="flex flex-col gap-1">
+                                                                        <h6 className="font-bold text-indigo-900 text-lg">Sidang {sched.type === 'Thesis' ? 'Thesis' : sched.type}</h6>
+                                                                    </div>
+                                                                    <div className="flex gap-2 items-center">
+                                                                        <div className="bg-white text-indigo-700 font-semibold px-3 py-1.5 rounded-md text-sm shadow-sm border border-indigo-100 flex items-center gap-2">
+                                                                            <span>{new Date(sched.event_date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                                                            {sched.clocktime && <span className="text-gray-300">|</span>}
+                                                                            {sched.clocktime && <span>{sched.clocktime} WIB</span>}
+                                                                        </div>
+                                                                        <button onClick={() => handleEditClick(sched)} className="bg-white text-indigo-600 p-1.5 rounded-md shadow-sm border border-indigo-100 hover:bg-indigo-50 hover:text-indigo-800 transition" title="Edit Jadwal">
+                                                                            <Edit2 className="w-4 h-4" />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 mt-2 text-sm">
+                                                                    <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Ketua Penguji:</span> <span className="text-indigo-900 font-medium">{sched.chief_examiner}</span></div>
+                                                                    {sched.type === 'Thesis' && (
+                                                                        <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Sekretaris:</span> <span className="text-indigo-900 font-medium">{sched.secretary}</span></div>
+                                                                    )}
+                                                                    <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Penguji 1:</span> <span className="text-indigo-900 font-medium">{sched.examiner_1}</span></div>
+                                                                    <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Penguji 2:</span> <span className="text-indigo-900 font-medium">{sched.examiner_2}</span></div>
+                                                                    <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Penguji 3:</span> <span className="text-indigo-900 font-medium">{sched.examiner_3}</span></div>
+                                                                    {sched.examiner_4 && <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Penguji 4:</span> <span className="text-indigo-900 font-medium">{sched.examiner_4}</span></div>}
+                                                                </div>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>

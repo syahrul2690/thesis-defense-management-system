@@ -121,4 +121,8 @@ export const schedulesApi = {
         method: 'POST',
         body: JSON.stringify(data),
     }),
+    update: (id, data) => apiFetch(`/schedules/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    }),
 };

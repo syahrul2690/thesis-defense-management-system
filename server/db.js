@@ -72,12 +72,19 @@ export async function initDatabase() {
       examiner_1 TEXT,
       examiner_2 TEXT,
       examiner_3 TEXT,
-      examiner_4 TEXT
+      examiner_4 TEXT,
+      is_active INTEGER DEFAULT 1
     );
   `);
 
   try {
     db.run("ALTER TABLE schedules ADD COLUMN clocktime TIME");
+  } catch (err) {
+    // Column probably already exists
+  }
+
+  try {
+    db.run("ALTER TABLE schedules ADD COLUMN is_active INTEGER DEFAULT 1");
   } catch (err) {
     // Column probably already exists
   }
