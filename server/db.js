@@ -54,6 +54,12 @@ export async function initDatabase() {
     // Column probably already exists
   }
 
+  try {
+    db.run("ALTER TABLE submissions ADD COLUMN summary_text TEXT");
+  } catch (err) {
+    // Column probably already exists
+  }
+
   db.run(`
     CREATE TABLE IF NOT EXISTS examiners (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

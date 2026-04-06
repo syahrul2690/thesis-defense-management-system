@@ -43,11 +43,6 @@ export const StudentDashboard = () => {
         return !!sub;
     });
 
-    // Check if all Proposal docs are verified
-    const isProposalCleared = PROPOSAL_DOCS.every(docName =>
-        mySubmissions.some(sub => sub.document_name === docName && sub.status === 'Verified')
-    );
-
     const renderDocumentGroup = (title, docs, phase) => {
         const phaseSubmissions = mySubmissions.filter(s => s.type === phase);
 
@@ -129,21 +124,7 @@ export const StudentDashboard = () => {
             )}
 
             {renderDocumentGroup("Fase Proposal", PROPOSAL_DOCS, "Proposal")}
-            {isProposalCleared ? (
-                renderDocumentGroup("Fase Thesis", THESIS_DOCS, "Thesis")
-            ) : (
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center shadow-sm">
-                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-200 text-gray-400 mb-4">
-                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-700 mb-2">Fase Thesis Terkunci</h3>
-                    <p className="text-sm text-gray-500 max-w-md mx-auto">
-                        Semua dokumen wajib Proposal harus diunggah dan <span className="font-semibold text-gray-700">Terverifikasi</span> oleh fakultas sebelum Anda dapat melanjutkan ke fase Thesis.
-                    </p>
-                </div>
-            )}
+            {renderDocumentGroup("Fase Thesis", THESIS_DOCS, "Thesis")}
         </div>
     );
 };
@@ -160,11 +141,6 @@ export const SubmitDocument = () => {
     const mySubmissions = submissions.filter(s => Number(s.student_id) === Number(currentUser?.id));
     const requiredDocs = phase === 'Proposal' ? PROPOSAL_DOCS : THESIS_DOCS;
     const existingSubmission = mySubmissions.find(s => s.type === phase && s.document_name === selectedDoc);
-
-    // Check if all Proposal docs are verified
-    const isProposalCleared = PROPOSAL_DOCS.every(docName =>
-        mySubmissions.some(sub => sub.document_name === docName && sub.status === 'Verified')
-    );
 
     // Reset selected doc when phase changes
     useEffect(() => {
@@ -207,29 +183,22 @@ export const SubmitDocument = () => {
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Fase</label>
                         <div className="grid grid-cols-2 gap-4">
-                            {['Proposal', 'Thesis'].map((t) => {
-                                const isLocked = t === 'Thesis' && !isProposalCleared;
-                                return (
-                                    <label
-                                        key={t}
-                                        title={isLocked ? "Selesaikan verifikasi Fase Proposal terlebih dahulu." : ""}
-                                        className={`flex items-center justify-center px-4 py-3 border rounded-lg transition-colors ${isLocked ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed' :
-                                            phase === t ? 'bg-indigo-50 border-indigo-600 text-indigo-700 cursor-pointer' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer'
-                                            }`}
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="phase"
-                                            value={t}
-                                            disabled={isLocked}
-                                            checked={phase === t}
-                                            onChange={(e) => setPhase(e.target.value)}
-                                            className="sr-only"
-                                        />
-                                        <span className="font-medium">{t === 'Thesis' ? 'Thesis' : t} {isLocked && ' (Terkunci)'}</span>
-                                    </label>
-                                )
-                            })}
+                            {['Proposal', 'Thesis'].map((t) => (
+                                <label
+                                    key={t}
+                                    className={`flex items-center justify-center px-4 py-3 border rounded-lg transition-colors cursor-pointer ${phase === t ? 'bg-indigo-50 border-indigo-600 text-indigo-700' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="phase"
+                                        value={t}
+                                        checked={phase === t}
+                                        onChange={(e) => setPhase(e.target.value)}
+                                        className="sr-only"
+                                    />
+                                    <span className="font-medium">{t}</span>
+                                </label>
+                            ))}
                         </div>
                     </div>
 

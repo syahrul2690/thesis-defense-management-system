@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useMockData } from '../context/MockDataContext.jsx';
-import { Calendar, Users, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Download, Edit2, X, Save } from 'lucide-react';
+import { Calendar, Users, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Download, Edit2, X, Save, BookOpen, Loader2 } from 'lucide-react';
+import { submissionsApi } from '../utils/api.js';
 import { getDocumentSortIndex, PROPOSAL_DOCS, THESIS_DOCS } from '../utils/constants.js';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -13,6 +14,33 @@ export const SupervisorDashboard = () => {
     const [editingScheduleId, setEditingScheduleId] = useState(null);
     const [editForm, setEditForm] = useState({});
     const [editError, setEditError] = useState('');
+
+    // Summary modal state
+    const [summaryModal, setSummaryModal] = useState(null); // { docId, docName, studentName }
+    const [summaryData, setSummaryData] = useState(null);   // { summary, numPages, wordCount, cached }
+    const [summaryLoading, setSummaryLoading] = useState(false);
+    const [summaryError, setSummaryError] = useState('');
+
+    const handleOpenSummary = async (doc, studentName) => {
+        setSummaryModal({ docId: doc.id, docName: doc.document_name, studentName });
+        setSummaryData(null);
+        setSummaryError('');
+        setSummaryLoading(true);
+        try {
+            const data = await submissionsApi.getSummary(doc.id);
+            setSummaryData(data);
+        } catch (err) {
+            setSummaryError(err.message || 'Gagal memuat ringkasan.');
+        } finally {
+            setSummaryLoading(false);
+        }
+    };
+
+    const handleCloseSummary = () => {
+        setSummaryModal(null);
+        setSummaryData(null);
+        setSummaryError('');
+    };
 
     const toggleStudent = (studentId) => {
         setExpandedStudents(prev => ({
@@ -65,7 +93,7 @@ export const SupervisorDashboard = () => {
 
         const tableRows = phaseStudents.map(student => {
             const sched = student.schedules.find(s => s.type === phase);
-            const examiners = [sched.examiner_1, sched.examiner_2, sched.examiner_3, sched.examiner_4].filter(Boolean).join(', ');
+            const examiners = [sched.examiner_1, sched.examiner_2, sched.examiner_3].filter(Boolean).join(', ');
 
             return [
                 student.studentName,
@@ -104,7 +132,6 @@ export const SupervisorDashboard = () => {
             examiner_1: sched.examiner_1 || '',
             examiner_2: sched.examiner_2 || '',
             examiner_3: sched.examiner_3 || '',
-            examiner_4: sched.examiner_4 || '',
         });
         setEditError('');
     };
@@ -277,9 +304,18 @@ export const SupervisorDashboard = () => {
                                                                                 </span>
                                                                             )}
                                                                         </div>
-                                                                        <a href={doc.file_path} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:text-indigo-800 mt-1.5 inline-block font-medium">
-                                                                            Lihat Dokumen →
-                                                                        </a>
+                                                                        <div className="flex items-center gap-3 mt-1.5">
+                                                                            <a href={doc.file_path} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                                                                                Lihat Dokumen →
+                                                                            </a>
+                                                                            <button
+                                                                                onClick={() => handleOpenSummary(doc, student.studentName)}
+                                                                                className="text-xs text-emerald-600 hover:text-emerald-800 font-medium flex items-center gap-1"
+                                                                                title="Ringkasan AI"
+                                                                            >
+                                                                                <BookOpen className="w-3 h-3" /> Ringkasan AI
+                                                                            </button>
+                                                                        </div>
                                                                     </div>
                                                                     <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${doc.status === 'Verified' ? 'bg-green-50 text-green-700 border-green-200' :
                                                                         doc.status === 'Rejected' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'
@@ -360,15 +396,6 @@ export const SupervisorDashboard = () => {
                                                                             {getAvailableExaminersForEdit('examiner_3').map(ex => <option key={ex.id} value={ex.name}>{ex.name}</option>)}
                                                                         </select>
                                                                     </div>
-                                                                    {sched.type === 'Thesis' && (
-                                                                        <div>
-                                                                            <label className="block text-xs font-semibold text-indigo-900 mb-1">Penguji 4</label>
-                                                                            <select name="examiner_4" value={editForm.examiner_4} onChange={handleEditChange} className="w-full text-sm px-3 py-1.5 border border-indigo-200 rounded focus:ring-1 focus:ring-indigo-500">
-                                                                                <option value="">Pilih...</option>
-                                                                                {getAvailableExaminersForEdit('examiner_4').map(ex => <option key={ex.id} value={ex.name}>{ex.name}</option>)}
-                                                                            </select>
-                                                                        </div>
-                                                                    )}
                                                                 </div>
                                                                 <button onClick={() => submitEdit(sched)} className="mt-4 w-full flex justify-center items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition">
                                                                     <Save className="w-4 h-4" /> Simpan Perubahan
@@ -399,7 +426,6 @@ export const SupervisorDashboard = () => {
                                                                     <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Penguji 1:</span> <span className="text-indigo-900 font-medium">{sched.examiner_1}</span></div>
                                                                     <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Penguji 2:</span> <span className="text-indigo-900 font-medium">{sched.examiner_2}</span></div>
                                                                     <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Penguji 3:</span> <span className="text-indigo-900 font-medium">{sched.examiner_3}</span></div>
-                                                                    {sched.examiner_4 && <div className="flex items-center gap-2"><span className="text-indigo-400 font-medium w-24">Penguji 4:</span> <span className="text-indigo-900 font-medium">{sched.examiner_4}</span></div>}
                                                                 </div>
                                                             </>
                                                         )}
@@ -414,6 +440,74 @@ export const SupervisorDashboard = () => {
                     ))
                 )}
             </div>
+
+            {/* Summary Modal */}
+            {summaryModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+                        {/* Header */}
+                        <div className="flex items-start justify-between p-6 border-b border-gray-100">
+                            <div>
+                                <div className="flex items-center gap-2 text-emerald-600 mb-1">
+                                    <BookOpen className="w-5 h-5" />
+                                    <span className="text-sm font-semibold uppercase tracking-wide">Ringkasan AI</span>
+                                </div>
+                                <h3 className="text-lg font-bold text-gray-900">{summaryModal.docName}</h3>
+                                <p className="text-sm text-gray-500 mt-0.5">{summaryModal.studentName}</p>
+                            </div>
+                            <button onClick={handleCloseSummary} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-6 overflow-y-auto flex-1">
+                            {summaryLoading && (
+                                <div className="flex flex-col items-center justify-center py-12 gap-3 text-gray-400">
+                                    <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+                                    <p className="text-sm">Membaca dan meringkas dokumen...</p>
+                                </div>
+                            )}
+                            {summaryError && (
+                                <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 text-sm">
+                                    {summaryError}
+                                </div>
+                            )}
+                            {summaryData && (
+                                <>
+                                    <div className="flex gap-4 mb-5">
+                                        {summaryData.numPages && (
+                                            <div className="bg-slate-50 border border-slate-100 rounded-lg px-4 py-2 text-center">
+                                                <div className="text-xl font-bold text-slate-700">{summaryData.numPages}</div>
+                                                <div className="text-xs text-slate-400 font-medium">Halaman</div>
+                                            </div>
+                                        )}
+                                        {summaryData.wordCount && (
+                                            <div className="bg-slate-50 border border-slate-100 rounded-lg px-4 py-2 text-center">
+                                                <div className="text-xl font-bold text-slate-700">{summaryData.wordCount.toLocaleString()}</div>
+                                                <div className="text-xs text-slate-400 font-medium">Kata</div>
+                                            </div>
+                                        )}
+                                        {summaryData.cached && (
+                                            <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-4 py-2 flex items-center">
+                                                <span className="text-xs text-emerald-600 font-medium">Dari cache</span>
+                                            </div>
+                                        )}
+                                        {summaryData.usedOCR && (
+                                            <div className="bg-amber-50 border border-amber-100 rounded-lg px-4 py-2 flex items-center">
+                                                <span className="text-xs text-amber-600 font-medium">OCR (dokumen scan)</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-line leading-relaxed">
+                                        {summaryData.summary}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -468,7 +562,6 @@ export const ScheduleDefense = () => {
         examiner_1: '',
         examiner_2: '',
         examiner_3: '',
-        examiner_4: '',
     };
 
     const [proposalForm, setProposalForm] = useState(defaultFormState);
@@ -493,8 +586,8 @@ export const ScheduleDefense = () => {
         }
 
         let scheduleData = { ...formState, submission_id: parseInt(formState.submission_id) };
+        scheduleData.examiner_4 = null; // 4th examiner not used in any phase
         if (formType === 'Proposal') {
-            scheduleData.examiner_4 = null; // proposals don't need 4th examiner
             scheduleData.secretary = null; // proposals don't need secretary
         }
 
@@ -623,15 +716,6 @@ export const ScheduleDefense = () => {
                         </select>
                     </div>
 
-                    {formType === 'Thesis' && (
-                        <div className="col-span-2 md:col-span-1">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Penguji 4 (Hanya Sidang Akhir)</label>
-                            <select name="examiner_4" required value={formState.examiner_4} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                                <option value="">Pilih...</option>
-                                {getAvailableExaminers(formState, 'examiner_4').map(ex => <option key={ex.id} value={ex.name}>{ex.name}</option>)}
-                            </select>
-                        </div>
-                    )}
                 </div>
 
                 <div className="pt-8 border-t border-slate-200 mt-6">

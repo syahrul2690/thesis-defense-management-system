@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { queryAll, queryOne, runSql } from '../db.js';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
+import { generateSummary } from '../services/summarizer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -106,7 +107,7 @@ router.put('/:id/file', authMiddleware, requireRole('student'), upload.single('f
 
         const file_path = `/uploads/${req.file.filename}`;
 
-        runSql("UPDATE submissions SET file_path = ?, status = 'Pending', is_reuploaded = 1, created_at = datetime('now') WHERE id = ?",
+        runSql("UPDATE submissions SET file_path = ?, status = 'Pending', is_reuploaded = 1, summary_text = NULL, created_at = datetime('now') WHERE id = ?",
             [file_path, Number(req.params.id)]);
 
         const updated = queryOne(`
@@ -147,6 +148,44 @@ router.put('/:id/status', authMiddleware, requireRole('verificator'), (req, res)
     } catch (err) {
         console.error('Update status error:', err);
         res.status(500).json({ error: 'Failed to update status' });
+    }
+});
+
+// GET /api/submissions/:id/summary — supervisor only
+router.get('/:id/summary', authMiddleware, requireRole('supervisor'), async (req, res) => {
+    try {
+        const submission = queryOne('SELECT * FROM submissions WHERE id = ?', [Number(req.params.id)]);
+        if (!submission) {
+            return res.status(404).json({ error: 'Submission not found' });
+        }
+
+        // Return cached summary if available
+        if (submission.summary_text) {
+            return res.json({
+                summary: submission.summary_text,
+                cached: true,
+                numPages: submission.num_pages || null,
+                wordCount: submission.word_count || null
+            });
+        }
+
+        // Resolve absolute path from stored file_path (e.g. /uploads/filename.pdf)
+        const filename = path.basename(submission.file_path);
+        const absolutePath = path.join(__dirname, '..', 'uploads', filename);
+
+        const { summary, numPages, wordCount, usedOCR } = await generateSummary(
+            absolutePath,
+            submission.student_name || null,
+            submission.document_name || null
+        );
+
+        // Cache in DB
+        runSql('UPDATE submissions SET summary_text = ? WHERE id = ?', [summary, Number(req.params.id)]);
+
+        res.json({ summary, cached: false, numPages, wordCount, usedOCR });
+    } catch (err) {
+        console.error('Summary error:', err);
+        res.status(500).json({ error: err.message || 'Failed to generate summary' });
     }
 });
 

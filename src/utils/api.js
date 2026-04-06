@@ -100,6 +100,8 @@ export const submissionsApi = {
         method: 'PUT',
         body: JSON.stringify({ status }),
     }),
+
+    getSummary: (id) => apiFetch(`/submissions/${id}/summary`),
 };
 
 // Examiners API

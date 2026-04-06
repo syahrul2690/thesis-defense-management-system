@@ -23,3 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 *.db
+
+# Environment variables
+.env
+server/.env
+
+# Uploaded files (runtime data, not source code)
+server/uploads/*
+!server/uploads/.gitkeep
