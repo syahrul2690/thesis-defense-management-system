@@ -221,7 +221,7 @@ async function summarizeWithOpenRouter(text, studentName, submissionTitle) {
             'X-Title': 'TDMS PDF Summarizer'
         },
         body: JSON.stringify({
-            model: 'minimax/minimax-m2.5:free',
+            model: 'qwen/qwen3.6-plus:free',
             messages: [{ role: 'user', content: buildTextPrompt(text, studentName, submissionTitle) }],
             max_tokens: 800,
             temperature: 0.3
