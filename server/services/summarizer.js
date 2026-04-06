@@ -139,7 +139,7 @@ Untuk setiap dokumen yang terlihat pada halaman hasil scan, analisis dan tulis p
             'X-Title': 'TDMS PDF Summarizer'
         },
         body: JSON.stringify({
-            model: 'minimax/minimax-m2.5:free',
+            model: 'qwen/qwen3.6-plus:free',
             messages: [{ role: 'user', content }],
             max_tokens: 800,
             temperature: 0.3
