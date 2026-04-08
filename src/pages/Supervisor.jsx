@@ -77,6 +77,40 @@ export const SupervisorDashboard = () => {
         return acc;
     }, {}));
 
+    // Group students into 3 categories and sort by closest schedule date to today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const getSchedDate = (student, type) => {
+        const s = student.schedules.find(sc => sc.type === type);
+        return s ? new Date(s.event_date) : null;
+    };
+
+    const proposalGroup = [];
+    const thesisGroup = [];
+    const noScheduleGroup = [];
+
+    groupedStudents.forEach(student => {
+        const hasThesis = student.schedules.some(s => s.type === 'Thesis');
+        const hasProposal = student.schedules.some(s => s.type === 'Proposal');
+        if (hasThesis) thesisGroup.push(student);
+        else if (hasProposal) proposalGroup.push(student);
+        else noScheduleGroup.push(student);
+    });
+
+    const sortByClosest = (group, type) =>
+        [...group].sort((a, b) => {
+            const da = getSchedDate(a, type);
+            const db = getSchedDate(b, type);
+            return Math.abs(da - today) - Math.abs(db - today);
+        });
+
+    const studentGroups = [
+        { label: 'Jadwal Proposal', color: 'indigo', students: sortByClosest(proposalGroup, 'Proposal') },
+        { label: 'Jadwal Thesis', color: 'purple', students: sortByClosest(thesisGroup, 'Thesis') },
+        { label: 'Belum Ada Jadwal', color: 'gray', students: noScheduleGroup },
+    ];
+
     const handleDownloadPhasePDF = (phase) => {
         const doc = new jsPDF({ orientation: 'landscape' });
 
@@ -238,7 +272,23 @@ export const SupervisorDashboard = () => {
                         Belum ada aktivitas mahasiswa.
                     </div>
                 ) : (
-                    groupedStudents.map(student => (
+                    <div className="space-y-10">
+                    {studentGroups.map(group => (
+                        <div key={group.label}>
+                            <div className="flex items-center gap-3 mb-4">
+                                <span className={`inline-block w-3 h-3 rounded-full ${group.color === 'indigo' ? 'bg-indigo-500' : group.color === 'purple' ? 'bg-purple-500' : 'bg-gray-400'}`} />
+                                <h3 className={`text-lg font-bold ${group.color === 'indigo' ? 'text-indigo-700' : group.color === 'purple' ? 'text-purple-700' : 'text-gray-500'}`}>
+                                    {group.label}
+                                    <span className="ml-2 text-sm font-normal text-gray-400">({group.students.length} mahasiswa)</span>
+                                </h3>
+                            </div>
+                            {group.students.length === 0 ? (
+                                <div className="bg-white rounded-xl border border-dashed border-gray-200 p-5 text-center text-gray-400 text-sm">
+                                    Tidak ada mahasiswa di kelompok ini.
+                                </div>
+                            ) : (
+                            <div className="space-y-6">
+                    {group.students.map(student => (
                         <div key={student.studentId} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300">
                             <button
                                 onClick={() => toggleStudent(student.studentId)}
@@ -437,7 +487,12 @@ export const SupervisorDashboard = () => {
                                 </div>
                             )}
                         </div>
-                    ))
+                    ))}
+                </div>
+                            )}
+                        </div>
+                    ))}
+                    </div>
                 )}
             </div>
 

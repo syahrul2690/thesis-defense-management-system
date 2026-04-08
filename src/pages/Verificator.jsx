@@ -11,7 +11,7 @@ export const VerificatorDashboard = () => {
     };
 
     // Group submissions by student
-    const groupedSubmissions = Object.values(submissions.reduce((acc, sub) => {
+    const allGroupedSubmissions = Object.values(submissions.reduce((acc, sub) => {
         const key = sub.student_id;
         if (!acc[key]) {
             acc[key] = {
@@ -34,6 +34,40 @@ export const VerificatorDashboard = () => {
         return acc;
     }, {}));
 
+    // Group students into 3 categories and sort by closest schedule date to today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const getSchedDate = (student, type) => {
+        const s = student.schedules.find(sc => sc.type === type);
+        return s ? new Date(s.event_date) : null;
+    };
+
+    const proposalGroup = [];
+    const thesisGroup = [];
+    const noScheduleGroup = [];
+
+    allGroupedSubmissions.forEach(student => {
+        const hasThesis = student.schedules.some(s => s.type === 'Thesis');
+        const hasProposal = student.schedules.some(s => s.type === 'Proposal');
+        if (hasThesis) thesisGroup.push(student);
+        else if (hasProposal) proposalGroup.push(student);
+        else noScheduleGroup.push(student);
+    });
+
+    const sortByClosest = (group, type) =>
+        [...group].sort((a, b) => {
+            const da = getSchedDate(a, type);
+            const db = getSchedDate(b, type);
+            return Math.abs(da - today) - Math.abs(db - today);
+        });
+
+    const studentGroups = [
+        { label: 'Jadwal Proposal', color: 'indigo', students: sortByClosest(proposalGroup, 'Proposal') },
+        { label: 'Jadwal Thesis', color: 'purple', students: sortByClosest(thesisGroup, 'Thesis') },
+        { label: 'Belum Ada Jadwal', color: 'gray', students: noScheduleGroup },
+    ];
+
     // State to track open phases per student: { "studentId-phase": boolean }
     const [openPhases, setOpenPhases] = useState({});
 
@@ -49,13 +83,28 @@ export const VerificatorDashboard = () => {
         <div className="space-y-8">
             <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 to-purple-600">Verifikasi Dokumen</h2>
 
-            {groupedSubmissions.length === 0 ? (
+            {allGroupedSubmissions.length === 0 ? (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center text-gray-500">
                     <p>Tidak ada dokumen untuk diverifikasi.</p>
                 </div>
             ) : (
-                <div className="space-y-6">
-                    {groupedSubmissions.map(studentGroup => (
+                <div className="space-y-10">
+                    {studentGroups.map(group => (
+                        <div key={group.label}>
+                            <div className={`flex items-center gap-3 mb-4`}>
+                                <span className={`inline-block w-3 h-3 rounded-full ${group.color === 'indigo' ? 'bg-indigo-500' : group.color === 'purple' ? 'bg-purple-500' : 'bg-gray-400'}`} />
+                                <h3 className={`text-lg font-bold ${group.color === 'indigo' ? 'text-indigo-700' : group.color === 'purple' ? 'text-purple-700' : 'text-gray-500'}`}>
+                                    {group.label}
+                                    <span className="ml-2 text-sm font-normal text-gray-400">({group.students.length} mahasiswa)</span>
+                                </h3>
+                            </div>
+                            {group.students.length === 0 ? (
+                                <div className="bg-white rounded-xl border border-dashed border-gray-200 p-5 text-center text-gray-400 text-sm">
+                                    Tidak ada mahasiswa di kelompok ini.
+                                </div>
+                            ) : (
+                            <div className="space-y-6">
+                    {group.students.map(studentGroup => (
                         <div key={studentGroup.studentId} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                             <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center flex-wrap gap-4">
                                 <div>
@@ -162,6 +211,10 @@ export const VerificatorDashboard = () => {
                                     );
                                 })}
                             </div>
+                        </div>
+                    ))}
+                </div>
+                            )}
                         </div>
                     ))}
                 </div>
