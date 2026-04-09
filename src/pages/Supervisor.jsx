@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMockData } from '../context/MockDataContext.jsx';
-import { Calendar, Users, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Download, Edit2, X, Save, BookOpen, Loader2 } from 'lucide-react';
+import { Calendar, Users, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Download, Edit2, X, Save, BookOpen, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { submissionsApi } from '../utils/api.js';
 import { getDocumentSortIndex, PROPOSAL_DOCS, THESIS_DOCS } from '../utils/constants.js';
 import { jsPDF } from 'jspdf';
@@ -20,6 +20,21 @@ export const SupervisorDashboard = () => {
     const [summaryData, setSummaryData] = useState(null);   // { summary, numPages, wordCount, cached }
     const [summaryLoading, setSummaryLoading] = useState(false);
     const [summaryError, setSummaryError] = useState('');
+
+    // Calendar state
+    const nowDate = new Date();
+    const [calMonth, setCalMonth] = useState(nowDate.getMonth());
+    const [calYear, setCalYear]   = useState(nowDate.getFullYear());
+    const [selectedCalDate, setSelectedCalDate] = useState(null); // 'YYYY-MM-DD'
+
+    const prevCalMonth = () => {
+        if (calMonth === 0) { setCalMonth(11); setCalYear(y => y - 1); }
+        else setCalMonth(m => m - 1);
+    };
+    const nextCalMonth = () => {
+        if (calMonth === 11) { setCalMonth(0); setCalYear(y => y + 1); }
+        else setCalMonth(m => m + 1);
+    };
 
     const handleOpenSummary = async (doc, studentName) => {
         setSummaryModal({ docId: doc.id, docName: doc.document_name, studentName });
@@ -110,6 +125,42 @@ export const SupervisorDashboard = () => {
         { label: 'Jadwal Thesis', color: 'purple', students: sortByClosest(thesisGroup, 'Thesis') },
         { label: 'Belum Ada Jadwal', color: 'gray', students: noScheduleGroup },
     ];
+
+    // ── Calendar data ──────────────────────────────────────────────────────────
+    // Build a map: 'YYYY-MM-DD' → [{ studentName, studentIdentifier, type, clocktime }]
+    const scheduleMap = schedules.reduce((acc, sched) => {
+        if (!sched.event_date) return acc;
+        const dateStr = sched.event_date.slice(0, 10);
+        if (!acc[dateStr]) acc[dateStr] = [];
+        const sub = submissions.find(s => s.id === sched.submission_id);
+        if (sub) {
+            acc[dateStr].push({
+                studentName: sub.student_name || 'Unknown',
+                studentIdentifier: sub.student_identifier || '-',
+                type: sub.type,
+                clocktime: sched.clocktime || null,
+            });
+        }
+        return acc;
+    }, {});
+
+    // Generate calendar cells for calMonth/calYear
+    const calFirstDay   = new Date(calYear, calMonth, 1);
+    const calDaysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    const calStartDow   = calFirstDay.getDay(); // 0 = Sunday
+    const calCells = [];
+    for (let i = 0; i < calStartDow; i++) calCells.push(null);
+    for (let d = 1; d <= calDaysInMonth; d++) calCells.push(d);
+    while (calCells.length % 7 !== 0) calCells.push(null);
+
+    const todayStr = `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2,'0')}-${String(nowDate.getDate()).padStart(2,'0')}`;
+    const toDateStr = (d) => `${calYear}-${String(calMonth + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+
+    const MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    const DAY_NAMES   = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+
+    const selectedDateEntries = selectedCalDate ? (scheduleMap[selectedCalDate] || []) : [];
+    // ──────────────────────────────────────────────────────────────────────────
 
     const handleDownloadPhasePDF = (phase) => {
         const doc = new jsPDF({ orientation: 'landscape' });
@@ -243,6 +294,131 @@ export const SupervisorDashboard = () => {
                         <div className="text-sm text-slate-500 font-semibold uppercase tracking-wider mt-1">Siap Sidang Thesis</div>
                     </div>
                 </div>
+            </div>
+
+            {/* ── Schedule Calendar ── */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-2">
+                        <Calendar className="w-5 h-5 text-indigo-600" />
+                        <h3 className="text-lg font-bold text-gray-900">Kalender Jadwal Sidang</h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button onClick={prevCalMonth} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition">
+                            <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <span className="text-sm font-bold text-gray-700 w-36 text-center">
+                            {MONTH_NAMES[calMonth]} {calYear}
+                        </span>
+                        <button onClick={nextCalMonth} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition">
+                            <ChevronRight className="w-5 h-5" />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Day-of-week headers */}
+                <div className="grid grid-cols-7 mb-1">
+                    {DAY_NAMES.map(d => (
+                        <div key={d} className="text-center text-xs font-bold text-gray-400 uppercase py-1">{d}</div>
+                    ))}
+                </div>
+
+                {/* Calendar grid */}
+                <div className="grid grid-cols-7 gap-1">
+                    {calCells.map((day, idx) => {
+                        if (!day) return <div key={`empty-${idx}`} />;
+                        const dateStr = toDateStr(day);
+                        const entries = scheduleMap[dateStr] || [];
+                        const hasProposal = entries.some(e => e.type === 'Proposal');
+                        const hasThesis   = entries.some(e => e.type === 'Thesis');
+                        const isToday     = dateStr === todayStr;
+                        const isSelected  = dateStr === selectedCalDate;
+                        const hasAny      = entries.length > 0;
+
+                        return (
+                            <button
+                                key={dateStr}
+                                onClick={() => setSelectedCalDate(isSelected ? null : dateStr)}
+                                className={`
+                                    relative flex flex-col items-center justify-start pt-1.5 pb-2 px-1 rounded-xl min-h-[56px] text-sm font-medium transition-all
+                                    ${isSelected  ? 'ring-2 ring-indigo-400 bg-indigo-50'       : ''}
+                                    ${isToday && !isSelected ? 'ring-2 ring-indigo-300 bg-indigo-50/60' : ''}
+                                    ${!isToday && !isSelected && hasAny  ? 'bg-slate-50 hover:bg-slate-100' : ''}
+                                    ${!isToday && !isSelected && !hasAny ? 'hover:bg-gray-50' : ''}
+                                    ${isToday ? 'text-indigo-700 font-extrabold' : 'text-gray-700'}
+                                `}
+                            >
+                                <span className={`
+                                    text-xs leading-none mb-1.5
+                                    ${isToday ? 'bg-indigo-600 text-white rounded-full w-5 h-5 flex items-center justify-center' : ''}
+                                `}>{day}</span>
+                                <div className="flex gap-0.5 flex-wrap justify-center">
+                                    {hasProposal && (
+                                        <span className="w-2 h-2 rounded-full bg-indigo-500" title="Proposal" />
+                                    )}
+                                    {hasThesis && (
+                                        <span className="w-2 h-2 rounded-full bg-purple-500" title="Thesis" />
+                                    )}
+                                </div>
+                                {entries.length > 1 && (
+                                    <span className="absolute top-1 right-1.5 text-[9px] font-bold text-gray-400">{entries.length}</span>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Legend */}
+                <div className="flex items-center gap-5 mt-4 pt-3 border-t border-gray-100">
+                    <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block" /> Sidang Proposal
+                    </span>
+                    <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <span className="w-2.5 h-2.5 rounded-full bg-purple-500 inline-block" /> Sidang Thesis
+                    </span>
+                    <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <span className="w-2.5 h-2.5 rounded-full bg-indigo-300 ring-1 ring-indigo-400 inline-block" /> Hari Ini
+                    </span>
+                </div>
+
+                {/* Detail panel for selected date */}
+                {selectedCalDate && (
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                        <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-sm font-bold text-gray-700 flex items-center gap-1.5">
+                                <Calendar className="w-4 h-4 text-indigo-500" />
+                                {new Date(selectedCalDate + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                            </h4>
+                            <button onClick={() => setSelectedCalDate(null)} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100">
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                        {selectedDateEntries.length === 0 ? (
+                            <div className="text-sm text-gray-400 italic bg-gray-50 rounded-lg px-4 py-3">
+                                Tidak ada sidang pada hari ini. Tanggal tersedia.
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {selectedDateEntries.map((entry, i) => (
+                                    <div key={i} className={`flex items-center justify-between rounded-lg px-4 py-3 border ${entry.type === 'Proposal' ? 'bg-indigo-50 border-indigo-100' : 'bg-purple-50 border-purple-100'}`}>
+                                        <div>
+                                            <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full mr-2 ${entry.type === 'Proposal' ? 'bg-indigo-100 text-indigo-700' : 'bg-purple-100 text-purple-700'}`}>
+                                                {entry.type}
+                                            </span>
+                                            <span className="font-semibold text-gray-800 text-sm">{entry.studentName}</span>
+                                            <span className="text-gray-400 text-xs ml-2">({entry.studentIdentifier})</span>
+                                        </div>
+                                        {entry.clocktime && (
+                                            <span className="text-xs font-semibold text-gray-500 bg-white px-2 py-1 rounded-md border border-gray-200 shadow-sm">
+                                                {entry.clocktime} WIB
+                                            </span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             <div className="mt-8 space-y-6">
