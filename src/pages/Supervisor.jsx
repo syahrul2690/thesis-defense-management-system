@@ -173,8 +173,24 @@ export const SupervisorDashboard = () => {
 
         const tableColumn = ["Nama Mahasiswa", "NIM", "Hari/Tanggal", "Waktu", "Ketua Penguji", "Sekretaris", "Penguji"];
 
-        // Find all students with a schedule for this phase
-        const phaseStudents = groupedStudents.filter(student => student.schedules.some(s => s.type === phase));
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        // Only include students whose schedule is today or in the future
+        const phaseStudents = groupedStudents
+            .filter(student => {
+                const sched = student.schedules.find(s => s.type === phase);
+                if (!sched || !sched.event_date) return false;
+                const schedDate = new Date(sched.event_date);
+                schedDate.setHours(0, 0, 0, 0);
+                return schedDate >= todayStart;
+            })
+            // Sort ascending: nearest date first
+            .sort((a, b) => {
+                const da = new Date(a.schedules.find(s => s.type === phase).event_date);
+                const db = new Date(b.schedules.find(s => s.type === phase).event_date);
+                return da - db;
+            });
 
         const tableRows = phaseStudents.map(student => {
             const sched = student.schedules.find(s => s.type === phase);
@@ -192,7 +208,7 @@ export const SupervisorDashboard = () => {
         });
 
         if (tableRows.length === 0) {
-            tableRows.push(['-', '-', 'Belum ada jadwal', '-', '-', '-', '-']);
+            tableRows.push(['-', '-', 'Tidak ada jadwal mendatang', '-', '-', '-', '-']);
         }
 
         autoTable(doc, {
