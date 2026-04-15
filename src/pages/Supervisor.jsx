@@ -76,7 +76,8 @@ export const SupervisorDashboard = () => {
         ...ex,
         penguji1Count: proposalSchedules.filter(s => s.examiner_1 === ex.name).length,
         penguji2Count: proposalSchedules.filter(s => s.examiner_2 === ex.name).length,
-    })).filter(ex => ex.penguji1Count > 0 || ex.penguji2Count > 0);
+    })).filter(ex => ex.penguji1Count > 0 || ex.penguji2Count > 0)
+      .sort((a, b) => (b.penguji1Count + b.penguji2Count) - (a.penguji1Count + a.penguji2Count));
 
     // Group everything by student using `submissions`
     const groupedStudents = Object.values(submissions.reduce((acc, sub) => {
