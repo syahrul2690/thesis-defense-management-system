@@ -69,6 +69,15 @@ export const SupervisorDashboard = () => {
     const studentsWithVerifiedProposals = new Set(submissions.filter(s => s.type === 'Proposal' && s.status === 'Verified').map(s => s.student_id)).size;
     const studentsWithVerifiedDefenses = new Set(submissions.filter(s => s.type === 'Thesis' && s.status === 'Verified').map(s => s.student_id)).size;
 
+    // Count examiner assignments for Proposal schedules only
+    const proposalSubmissionIds = new Set(submissions.filter(s => s.type === 'Proposal').map(s => s.id));
+    const proposalSchedules = schedules.filter(s => proposalSubmissionIds.has(s.submission_id));
+    const examinerAssignments = examiners.map(ex => ({
+        ...ex,
+        penguji1Count: proposalSchedules.filter(s => s.examiner_1 === ex.name).length,
+        penguji2Count: proposalSchedules.filter(s => s.examiner_2 === ex.name).length,
+    })).filter(ex => ex.penguji1Count > 0 || ex.penguji2Count > 0);
+
     // Group everything by student using `submissions`
     const groupedStudents = Object.values(submissions.reduce((acc, sub) => {
         const key = sub.student_id;
@@ -310,6 +319,46 @@ export const SupervisorDashboard = () => {
                         <div className="text-sm text-slate-500 font-semibold uppercase tracking-wider mt-1">Siap Sidang Thesis</div>
                     </div>
                 </div>
+            </div>
+
+            {/* ── Examiner Assignment Stats (Proposal) ── */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div className="flex items-center gap-2 mb-4">
+                    <Users className="w-5 h-5 text-indigo-600" />
+                    <h3 className="text-lg font-bold text-gray-900">Penugasan Penguji — Sidang Proposal</h3>
+                </div>
+                {examinerAssignments.length === 0 ? (
+                    <p className="text-sm text-slate-400 italic">Belum ada penguji yang ditugaskan pada sidang proposal.</p>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="border-b border-slate-100">
+                                    <th className="text-left py-2 pr-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Nama Penguji</th>
+                                    <th className="text-center py-2 px-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Penguji 1</th>
+                                    <th className="text-center py-2 px-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Penguji 2</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {examinerAssignments.map(ex => (
+                                    <tr key={ex.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
+                                        <td className="py-2.5 pr-4 font-medium text-slate-700">{ex.name}</td>
+                                        <td className="py-2.5 px-4 text-center">
+                                            <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
+                                                {ex.penguji1Count}
+                                            </span>
+                                        </td>
+                                        <td className="py-2.5 px-4 text-center">
+                                            <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-700">
+                                                {ex.penguji2Count}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
 
             {/* ── Schedule Calendar ── */}
